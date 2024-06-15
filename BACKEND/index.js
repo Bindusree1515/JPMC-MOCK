@@ -24,6 +24,41 @@ app.get('/',(req,res)=>{
     })
 })
 
+app.post("/login" ,async (req,res) => {
+    //get users and authors collecion object
+  const userCollection = req.app.get("userCollection");
+  const authorCollection = req.app.get("authorCollection");
+
+  //get user or autrhor
+  const userCred = req.body;
+  //verifuy username of user
+  
+    let dbuser = await userCollection.findOne({
+      username: userCred.username,
+    });
+    if (dbuser === null) {
+      return res.send({ message: "Invalid username" });
+    } else {
+      let status = await bcryptjs.compare(userCred.password, dbuser.password);
+      // console.log("status",status)
+      if (status === false) {
+        return res.send({ message: "Invalid password" });
+      } else {
+        //create token
+        const signedToken = jwt.sign(
+          { username: dbuser.username },process.env.SECRET_KEY,
+          { expiresIn: "1h" }
+        );
+        delete dbuser.password;
+        res.send({
+          message: "login success",
+          token: signedToken,
+          user: dbuser,
+        });
+      }
+  }
+})
+
 
 app.post('/register',async (req,res)=>{
     const {username,password,name} = req.body;
