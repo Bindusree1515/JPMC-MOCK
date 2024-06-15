@@ -1,5 +1,7 @@
 const express=require('express');
 const app=express();
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 
 const mongoClient = require('mongodb').MongoClient;
 
@@ -58,7 +60,25 @@ app.post("/login" ,async (req,res) => {
 })
 
 
-
+app.post('/register',async (req,res)=>{
+    const {username,password,name} = req.body;
+    const user = await usersCollection.findOne({username: username});
+    if(user){
+        return res.send({
+            "message": "user already exists"
+        })
+    }
+    const hashedPassword = await bcrypt.hash(password,10);
+    await usersCollection.insertOne({username: username,password:hashedPassword, name:name})
+    .then(()=>{
+        res.send({
+            "message": "user created"
+        })
+    })
+    .catch((err)=>{
+        console.log(err);
+    })  
+})
 
 
 
